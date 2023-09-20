@@ -7,54 +7,48 @@ r = requests.get(url)
 
 soup = BeautifulSoup(r.text, 'html.parser')
 
-# citatos
-quotes_spans = soup.select('.text')
-quotes = [quote.get_text() for quote in quotes_spans]
+quotes = []
 
-# Autoriai
-author_smalls = soup.select('.author')
-authors = [author_small.get_text() for author_small in author_smalls]
-
-# Autorių inicialai
-hints1 = []
-for author in authors:
-    hint = ""
+blocks = soup.find_all('div', class_='quote')
+for block in blocks:
+    quote = block.find('span', class_='text').get_text()
+    author = block.find('small', class_='author').get_text()
+    hint1 = ""
     splitted = author.split()
     for word in splitted:
         if '.' not in word:
-            hint += f"{word[0]}."
+            hint1 += f"{word[0]}."
         else:
-            hint += word
-    hints1.append(hint)
-
-# Gimimo duomenys
-hints_a = soup.find_all("a", string="(about)")
-hints_links = [hint_a['href'] for hint_a in hints_a]
-
+            hint1 += word
+    hint2_link = block.find("a", string="(about)")['href']
+    quotes.append({"quote": quote, 'author': author, 'hint1': hint1, 'hint2_link': hint2_link})
+#
 def get_second_hint(i):
-    r = requests.get(f"{url}{hints_links[i]}")
+    r = requests.get(f"{url}{quotes[i]['hint2_link']}")
     soup = BeautifulSoup(r.text, 'html.parser')
     born = soup.find("div", class_="author-details").p.get_text()
     return born
 
+print(quotes)
+
 while True:
     i = randint(0, 9)
-    print(quotes[i])
+    print(quotes[i]['quote'])
     answer1 = input("You answer: ")
-    if answer1 == authors[i]:
-        print(f"Correct! Author is {authors[i]}")
+    if answer1 == quotes[i]['author']:
+        print(f"Correct! Author is {quotes[i]['author']}")
     else:
-        print(hints1[i])
+        print(quotes[i]['hint1'])
         answer2 = input("You answer: ")
-        if answer2 == authors[i]:
-            print(f"Correct! Author is {authors[i]}")
+        if answer2 == quotes[i]['author']:
+            print(f"Correct! Author is {quotes[i]['author']}")
         else:
             print(get_second_hint(i))
             answer3 = input("You answer: ")
-            if answer3 == authors[i]:
-                print(f"Correct! Author is {authors[i]}")
+            if answer3 == quotes[i]['author']:
+                print(f"Correct! Author is {quotes[i]['author']}")
             else:
-                print(f"Wrong! Author is {authors[i]}")
+                print(f"Wrong! Author is {quotes[i]['author']}")
     if_continue = input("Continue? y/n: ")
     if if_continue != "y":
         break
